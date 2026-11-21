@@ -1,8 +1,11 @@
 # flashcard-quizzer
 
-A simple terminal flashcard app written in Python. Load a deck of flashcards,
-quiz yourself card by card, and retry only the ones you got wrong. Decks are
-plain JSON files, so making your own study decks takes a minute.
+A simple flashcard app, two ways: a Python terminal app and a web version you
+can open on your phone. Load a deck of flashcards, quiz yourself card by card,
+and retry only the ones you got wrong. Decks are plain JSON files, so making
+your own study decks takes a minute.
+
+**Try the web version:** https://zezo998.github.io/flashcard-quizzer/
 
 ## Features
 
@@ -17,6 +20,18 @@ plain JSON files, so making your own study decks takes a minute.
 
 - Python 3.6+
 - No external packages - standard library only
+
+## Web version
+
+The `docs/` folder holds a single-page web app (plain HTML/CSS/JS, no build
+step) with the same quiz flow, hosted on GitHub Pages:
+
+https://zezo998.github.io/flashcard-quizzer/
+
+It works in a phone browser. The two example decks are built in, and you can
+load your own deck from a `.json` file, paste deck JSON, edit any loaded
+deck's cards in the built-in editor, and download the result. Decks you add
+are remembered in your browser's local storage.
 
 ## Installation
 
@@ -90,9 +105,11 @@ Retry the 2 card(s) you missed? (y/n) y
 
 ```
 flashcard-quizzer/
-├── flashcard_quizzer.py   # the whole app
+├── flashcard_quizzer.py    # the terminal app
 ├── decks/
-│   ├── python_basics.json # example deck: beginner Python questions
-│   └── world_capitals.json# example deck: geography
+│   ├── python_basics.json  # example deck: beginner Python questions
+│   └── world_capitals.json # example deck: geography
+├── docs/
+│   └── index.html          # the web version (GitHub Pages)
 └── README.md
 ```
