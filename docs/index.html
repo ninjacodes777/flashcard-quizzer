@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>flashcard-quizzer</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; margin: 8px 0 4px; }
+  h1 .sub { color: var(--muted); font-weight: normal; font-size: 0.95rem; display: block; }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 14px;
+  }
+  button {
+    font: inherit;
+    color: var(--text);
+    background: #21262d;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    font-size: 1rem;
+  }
+  button:active { background: #2d333b; }
+  button.primary { background: #1f6feb; border-color: #1f6feb; }
+  button.green { background: var(--green); border-color: var(--green); color: #0d1117; font-weight: 600; }
+  button.red { background: var(--red); border-color: var(--red); color: #0d1117; font-weight: 600; }
+  .row { display: flex; gap: 8px; }
+  .row button { flex: 1; }
+  .deck-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 8px;
+    background: #0d1117;
+  }
+  .deck-item .name { font-weight: 600; }
+  .deck-item .count { color: var(--muted); font-size: 0.85rem; }
+  .deck-item button { width: auto; margin: 0 0 0 4px; padding: 8px 12px; font-size: 0.9rem; }
+  .q { font-size: 1.25rem; font-weight: 600; margin: 8px 0; }
+  .a { font-size: 1.1rem; color: var(--green); margin: 8px 0; }
+  .progress { color: var(--muted); font-size: 0.9rem; margin-bottom: 4px; }
+  .bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+  .bar > div { height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+  .score { font-size: 2rem; font-weight: 700; text-align: center; margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+    background: #0d1117;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 8px;
+  }
+  input[type="text"] {
+    width: 100%;
+    font: inherit;
+    background: #0d1117;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 8px;
+  }
+  .error { color: var(--red); font-size: 0.9rem; margin-top: 6px; }
+  .hidden { display: none; }
+  a { color: var(--accent); }
+  .tabs { display: flex; gap: 8px; margin-top: 14px; }
+  .tabs button { margin-top: 0; }
+  .tabs button.active { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>flashcard-quizzer <span class="sub">quiz yourself with simple JSON decks</span></h1>
+
+  <!-- HOME: deck list -->
+  <div id="home">
+    <div class="panel" id="deckListPanel">
+      <div class="muted">Pick a deck to start a round. Cards shuffle every round.</div>
+      <div id="deckList"></div>
+    </div>
+    <div class="panel">
+      <div class="tabs">
+        <button id="tabLoad" class="active">Load deck</button>
+        <button id="tabEdit">Edit decks</button>
+      </div>
+      <div id="paneLoad">
+        <input type="file" id="fileInput" accept=".json,application/json" class="hidden">
+        <button id="pickFile">Choose a .json deck file</button>
+        <div class="muted" style="margin-top:8px">or paste deck JSON below and tap Add:</div>
+        <textarea id="pasteArea" placeholder='{"name": "My Deck", "cards": [{"front": "Question", "back": "Answer"}]}'></textarea>
+        <button id="addPasted" class="primary">Add deck</button>
+        <div class="error" id="loadError"></div>
+      </div>
+      <div id="paneEdit" class="hidden">
+        <div class="muted">Edit the JSON of any loaded deck, then save. Invalid JSON is rejected with an error.</div>
+        <input type="text" id="editName" placeholder="Deck name">
+        <textarea id="editArea"></textarea>
+        <div class="row">
+          <button id="saveEdit" class="primary">Save deck</button>
+          <button id="downloadEdit">Download .json</button>
+        </div>
+        <div class="error" id="editError"></div>
+      </div>
+    </div>
+    <p class="muted">CLI version and source: <a href="https://github.com/Zezo998/flashcard-quizzer">github.com/Zezo998/flashcard-quizzer</a></p>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="hidden">
+    <div class="panel">
+      <div class="progress" id="progress"></div>
+      <div class="bar"><div id="barFill"></div></div>
+      <div class="q" id="question"></div>
+      <div class="a hidden" id="answer"></div>
+      <button id="reveal" class="primary">Show answer</button>
+      <div class="row hidden" id="markRow">
+        <button id="markWrong" class="red">Wrong</button>
+        <button id="markRight" class="green">Right</button>
+      </div>
+      <button id="quitQuiz" class="muted-btn">End round</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="summary" class="hidden">
+    <div class="panel">
+      <div class="muted" id="summaryDeck"></div>
+      <div class="score" id="scoreLine"></div>
+      <div class="muted" id="scoreDetail" style="text-align:center"></div>
+      <button id="retryWrong" class="primary hidden">Retry wrong cards</button>
+      <button id="againFull">Play full deck again</button>
+      <button id="backHome">Back to decks</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ----- Built-in example decks (same content as the CLI repo's decks/ folder) -----
+const BUILTIN_DECKS = [
+  {
+    name: "Python Basics",
+    cards: [
+      { front: "What keyword defines a function in Python?", back: "def" },
+      { front: "What is the output type of input()?", back: "Always a string (str), even if the user types numbers" },
+      { front: "How do you start a for loop over a list called items?", back: "for item in items:" },
+      { front: "What does len([10, 20, 30]) return?", back: "3" },
+      { front: "Which data type stores key-value pairs?", back: "A dictionary (dict)" },
+      { front: "What keyword exits a loop immediately?", back: "break" },
+      { front: "How do you open a file called notes.txt for reading?", back: "open('notes.txt', 'r') - ideally inside a with block" },
+      { front: "What does the json.load() function do?", back: "Reads JSON data from a file and converts it into Python objects" },
+      { front: "What is the difference between a list and a tuple?", back: "A list can be changed (mutable); a tuple cannot (immutable)" },
+      { front: "How do you write a single-line comment in Python?", back: "Start the line with #" }
+    ]
+  },
+  {
+    name: "World Capitals",
+    cards: [
+      { front: "What is the capital of Egypt?", back: "Cairo" },
+      { front: "What is the capital of France?", back: "Paris" },
+      { front: "What is the capital of Japan?", back: "Tokyo" },
+      { front: "What is the capital of Brazil?", back: "Brasilia" },
+      { front: "What is the capital of Germany?", back: "Berlin" },
+      { front: "What is the capital of Saudi Arabia?", back: "Riyadh" }
+    ]
+  }
+];
+
+// ----- State -----
+let decks = loadDecks();
+let quiz = null; // { deckName, cards, index, wrong, round }
+
+function loadDecks() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("fcq_decks") || "null");
+    if (Array.isArray(saved) && saved.length) return saved;
+  } catch (e) { /* fall through to built-ins */ }
+  return JSON.parse(JSON.stringify(BUILTIN_DECKS));
+}
+
+function saveDecks() {
+  localStorage.setItem("fcq_decks", JSON.stringify(decks));
+}
+
+function validateDeck(deck) {
+  if (!deck || typeof deck !== "object") return "Deck must be a JSON object.";
+  if (!deck.name || typeof deck.name !== "string") return 'Deck needs a "name" string.';
+  if (!Array.isArray(deck.cards) || deck.cards.length === 0) return 'Deck needs a non-empty "cards" array.';
+  for (const c of deck.cards) {
+    if (!c || typeof c.front !== "string" || typeof c.back !== "string") {
+      return 'Every card needs a "front" and a "back" string.';
+    }
+  }
+  return null;
+}
+
+// ----- Screen switching -----
+const screens = { home: el("home"), quiz: el("quiz"), summary: el("summary") };
+function show(name) {
+  for (const k in screens) screens[k].classList.toggle("hidden", k !== name);
+  window.scrollTo(0, 0);
+}
+function el(id) { return document.getElementById(id); }
+
+// ----- Deck list -----
+function renderDeckList() {
+  const list = el("deckList");
+  list.innerHTML = "";
+  decks.forEach((deck, i) => {
+    const row = document.createElement("div");
+    row.className = "deck-item";
+    const info = document.createElement("div");
+    const nm = document.createElement("div");
+    nm.className = "name";
+    nm.textContent = deck.name;
+    const ct = document.createElement("div");
+    ct.className = "count";
+    ct.textContent = deck.cards.length + " cards";
+    info.appendChild(nm); info.appendChild(ct);
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    const play = document.createElement("button");
+    play.textContent = "Play";
+    play.className = "primary";
+    play.onclick = () => startQuiz(i, null);
+    const edit = document.createElement("button");
+    edit.textContent = "Edit";
+    edit.onclick = () => openEditor(i);
+    const del = document.createElement("button");
+    del.textContent = "Delete";
+    del.onclick = () => {
+      if (confirm('Delete deck "' + deck.name + '"?')) {
+        decks.splice(i, 1);
+        if (!decks.length) decks = JSON.parse(JSON.stringify(BUILTIN_DECKS));
+        saveDecks(); renderDeckList();
+      }
+    };
+    actions.appendChild(play); actions.appendChild(edit); actions.appendChild(del);
+    row.appendChild(info); row.appendChild(actions);
+    list.appendChild(row);
+  });
+}
+
+// ----- Tabs: load / edit -----
+el("tabLoad").onclick = () => switchPane("Load");
+el("tabEdit").onclick = () => switchPane("Edit");
+function switchPane(which) {
+  el("paneLoad").classList.toggle("hidden", which !== "Load");
+  el("paneEdit").classList.toggle("hidden", which !== "Edit");
+  el("tabLoad").classList.toggle("active", which === "Load");
+  el("tabEdit").classList.toggle("active", which === "Edit");
+  if (which === "Edit" && el("editArea").value === "" && decks.length) openEditor(0);
+}
+
+function openEditor(i) {
+  const deck = decks[i];
+  el("editName").value = deck.name;
+  el("editArea").value = JSON.stringify(deck.cards, null, 2);
+  el("editArea").dataset.deckIndex = i;
+  el("editError").textContent = "";
+  switchPane("Edit");
+}
+
+el("saveEdit").onclick = () => {
+  const i = Number(el("editArea").dataset.deckIndex || 0);
+  let cards;
+  try {
+    cards = JSON.parse(el("editArea").value);
+  } catch (e) {
+    el("editError").textContent = "Invalid JSON: " + e.message;
+    return;
+  }
+  const candidate = { name: el("editName").value.trim(), cards: cards };
+  const err = validateDeck(candidate);
+  if (err) { el("editError").textContent = err; return; }
+  decks[i] = candidate;
+  saveDecks(); renderDeckList();
+  el("editError").textContent = "";
+  switchPane("Load");
+};
+
+el("downloadEdit").onclick = () => {
+  const deck = { name: el("editName").value.trim() || "deck", cards: null };
+  try { deck.cards = JSON.parse(el("editArea").value); }
+  catch (e) { el("editError").textContent = "Invalid JSON: " + e.message; return; }
+  const blob = new Blob([JSON.stringify(deck, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = deck.name.toLowerCase().replace(/[^a-z0-9]+/g, "_") + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+// ----- Loading decks -----
+el("pickFile").onclick = () => el("fileInput").click();
+el("fileInput").onchange = (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => addDeckFromText(reader.result);
+  reader.readAsText(file);
+  ev.target.value = "";
+};
+
+el("addPasted").onclick = () => addDeckFromText(el("pasteArea").value);
+
+function addDeckFromText(text) {
+  let deck;
+  try {
+    deck = JSON.parse(text);
+  } catch (e) {
+    el("loadError").textContent = "Invalid JSON: " + e.message;
+    return;
+  }
+  const err = validateDeck(deck);
+  if (err) { el("loadError").textContent = err; return; }
+  decks.push({ name: deck.name, cards: deck.cards });
+  saveDecks(); renderDeckList();
+  el("pasteArea").value = "";
+  el("loadError").textContent = "";
+}
+
+// ----- Quiz flow -----
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz(deckIndex, cards) {
+  const deck = decks[deckIndex];
+  quiz = {
+    deckIndex: deckIndex,
+    deckName: deck.name,
+    cards: shuffled(cards || deck.cards),
+    index: 0,
+    wrong: []
+  };
+  show("quiz");
+  renderCard();
+}
+
+function renderCard() {
+  const total = quiz.cards.length;
+  const card = quiz.cards[quiz.index];
+  el("progress").textContent = quiz.deckName + " - card " + (quiz.index + 1) + " of " + total;
+  el("barFill").style.width = (100 * quiz.index / total) + "%";
+  el("question").textContent = card.front;
+  el("answer").textContent = card.back;
+  el("answer").classList.add("hidden");
+  el("markRow").classList.add("hidden");
+  el("reveal").classList.remove("hidden");
+}
+
+el("reveal").onclick = () => {
+  el("answer").classList.remove("hidden");
+  el("markRow").classList.remove("hidden");
+  el("reveal").classList.add("hidden");
+};
+
+el("markRight").onclick = () => mark(true);
+el("markWrong").onclick = () => mark(false);
+
+function mark(right) {
+  if (!right) quiz.wrong.push(quiz.cards[quiz.index]);
+  quiz.index++;
+  if (quiz.index < quiz.cards.length) {
+    renderCard();
+  } else {
+    renderSummary();
+  }
+}
+
+el("quitQuiz").onclick = () => {
+  if (confirm("End this round early?")) renderSummary(true);
+};
+
+function renderSummary(early) {
+  const answered = quiz.index;
+  const right = answered - quiz.wrong.length;
+  const pct = answered ? Math.round(100 * right / answered) : 0;
+  el("summaryDeck").textContent = quiz.deckName + (early ? " (ended early)" : "");
+  el("scoreLine").textContent = right + " / " + answered;
+  el("scoreDetail").textContent = pct + "% right - " + quiz.wrong.length + " wrong";
+  el("retryWrong").classList.toggle("hidden", quiz.wrong.length === 0);
+  el("barFill").style.width = "100%";
+  show("summary");
+}
+
+el("retryWrong").onclick = () => {
+  quiz.cards = shuffled(quiz.wrong);
+  quiz.wrong = [];
+  quiz.index = 0;
+  show("quiz");
+  renderCard();
+};
+
+el("againFull").onclick = () => startQuiz(quiz.deckIndex, null);
+el("backHome").onclick = () => { renderDeckList(); show("home"); };
+
+// ----- Boot -----
+renderDeckList();
+</script>
+</body>
+</html>
