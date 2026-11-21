@@ -1,0 +1,29 @@
+{
+  "name": "World Capitals",
+  "cards": [
+    {
+      "front": "What is the capital of Egypt?",
+      "back": "Cairo"
+    },
+    {
+      "front": "What is the capital of France?",
+      "back": "Paris"
+    },
+    {
+      "front": "What is the capital of Japan?",
+      "back": "Tokyo"
+    },
+    {
+      "front": "What is the capital of Brazil?",
+      "back": "Brasilia"
+    },
+    {
+      "front": "What is the capital of Germany?",
+      "back": "Berlin"
+    },
+    {
+      "front": "What is the capital of Saudi Arabia?",
+      "back": "Riyadh"
+    }
+  ]
+}
