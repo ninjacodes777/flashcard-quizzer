@@ -5,7 +5,7 @@ can open on your phone. Load a deck of flashcards, quiz yourself card by card,
 and retry only the ones you got wrong. Decks are plain JSON files, so making
 your own study decks takes a minute.
 
-**Try the web version:** https://zezo998.github.io/flashcard-quizzer/
+**Try the web version:** https://ninjacodes777.github.io/flashcard-quizzer/
 
 ## Features
 
@@ -26,7 +26,7 @@ your own study decks takes a minute.
 The `docs/` folder holds a single-page web app (plain HTML/CSS/JS, no build
 step) with the same quiz flow, hosted on GitHub Pages:
 
-https://zezo998.github.io/flashcard-quizzer/
+https://ninjacodes777.github.io/flashcard-quizzer/
 
 It works in a phone browser. The two example decks are built in, and you can
 load your own deck from a `.json` file, paste deck JSON, edit any loaded
@@ -36,7 +36,7 @@ are remembered in your browser's local storage.
 ## Installation
 
 ```bash
-git clone https://github.com/Zezo998/flashcard-quizzer.git
+git clone https://github.com/ninjacodes777/flashcard-quizzer.git
 cd flashcard-quizzer
 ```
 
@@ -82,7 +82,7 @@ Retry the 2 card(s) you missed? (y/n) y
 ## How it works
 
 - **Decks are JSON files.** Each file in `decks/` has a `name` and a list of
-  `cards`, and each card has a `front` and a `back`:
+ `cards`, and each card has a `front` and a `back`:
 
   ```json
   {
@@ -93,13 +93,13 @@ Retry the 2 card(s) you missed? (y/n) y
   }
   ```
 
-  To make your own deck, copy one of the examples, change the cards, and save
-  it as a new `.json` file in `decks/`. It shows up in the menu automatically.
+ To make your own deck, copy one of the examples, change the cards, and save
+ it as a new `.json` file in `decks/`. It shows up in the menu automatically.
 
 - **Quiz logic.** The app reads the deck with `json.load()`, shuffles a copy
-  of the card list with `random.shuffle()`, and walks through it one card at
-  a time. Cards you mark wrong are collected in a list; if you choose to
-  retry, that list becomes the deck for the next round.
+ of the card list with `random.shuffle()`, and walks through it one card at
+ a time. Cards you mark wrong are collected in a list; if you choose to
+ retry, that list becomes the deck for the next round.
 
 ## Project structure
 
